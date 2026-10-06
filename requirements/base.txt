@@ -1,0 +1,9 @@
+# NewSite3 — продакшн-зависимости
+# Django 5.2 LTS: поддержка до апреля 2028, Python 3.10-3.13
+Django>=5.2,<5.3
+djangorestframework>=3.16,<4.0
+psycopg[binary]>=3.2,<4.0
+django-environ>=0.12,<1.0
+Pillow>=11.0,<13.0
+gunicorn>=23.0,<24.0
+whitenoise>=6.8,<7.0
