@@ -1,0 +1,33 @@
+# --- секреты ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- Django ---
+/media/
+/staticfiles/
+*.log
+db.sqlite3
+
+# --- бэкапы и дампы ---
+*.sql
+*.dump
+*.bak
+backups/
+
+# --- IDE / ОС ---
+.idea/
+.vscode/
+.DS_Store
