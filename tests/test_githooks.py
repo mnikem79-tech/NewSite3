@@ -92,6 +92,23 @@ def test_hook(repo, name, path, body, should_pass):
     assert commit(repo, path, body) is should_pass
 
 
-def test_hook_is_executable():
-    assert HOOK.exists(), "хук отсутствует"
-    assert HOOK.stat().st_mode & 0o111, "хук не исполняемый"
+def test_scripts_are_executable():
+    """Флаг исполняемости проверяется в самом репозитории.
+
+    Права на диске теряются при переносе рабочей копии, а вот режим,
+    записанный в git, приезжает на сервер как есть — важен именно он.
+    """
+    root = HOOK.parent.parent
+    listing = subprocess.run(
+        ["git", "ls-files", "-s", ".githooks/", "deploy/", "scripts/"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+    not_executable = [
+        line.split("\t")[-1]
+        for line in listing.splitlines()
+        if line.split("\t")[-1].endswith((".sh", "pre-commit")) and not line.startswith("100755")
+    ]
+    assert not not_executable, f"в репозитории не исполняемые: {not_executable}"
