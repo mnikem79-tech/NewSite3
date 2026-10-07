@@ -103,7 +103,8 @@ for url in "/healthz/" "/"; do
     ok "$CODE  $url"
 done
 
-for url in "/about/" "/cart/" "/admin/login/"; do
+# Эти адреса есть всегда, независимо от наполнения сайта.
+for url in "/search/" "/cart/" "/api/v1/" "/admin/login/"; do
     CODE="$(probe "$url")"
     if [ "$CODE" = "200" ]; then ok "$CODE  $url"; else warn "$CODE  $url"; fi
 done
