@@ -94,7 +94,7 @@ say "Проверка"
 probe() {
     curl -s -o /dev/null -w '%{http_code}' \
         -H "Host: $HOST" -H "X-Forwarded-Proto: https" \
-        "http://127.0.0.1:$PORT$PREFIX$1" 2>/dev/null || echo 000
+        "http://127.0.0.1:$PORT$PREFIX$1" 2>/dev/null || true
 }
 
 for url in "/healthz/" "/"; do
