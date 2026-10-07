@@ -45,11 +45,16 @@ echo "      вернуть всё назад: sudo tar xzf $BACKUP -C $PARENT"
 
 # --- 2. Подключение к репозиторию ----------------------------------------
 say "Подключение к репозиторию"
+PREV_URL=""
 if [ -d .git ]; then
     ok "git здесь уже есть"
-    git remote get-url origin >/dev/null 2>&1 \
-        && git remote set-url origin "$REPO" \
-        || git remote add origin "$REPO"
+    PREV_URL="$(git remote get-url origin 2>/dev/null || true)"
+    if [ -n "$PREV_URL" ]; then
+        git remote set-url origin "$REPO"
+        [ "$PREV_URL" != "$REPO" ] && echo "      прежний адрес: $PREV_URL"
+    else
+        git remote add origin "$REPO"
+    fi
 else
     git init -q -b main
     git remote add origin "$REPO"
@@ -57,10 +62,101 @@ else
 fi
 ok "$REPO"
 
+# --- Загрузка кода, с запасными путями -----------------------------------
+# Репозиторий открытый, читать его можно без пароля. Но если на сервере
+# остались чужие сохранённые учётные данные, git подставит их, и GitHub
+# ответит отказом 403. Поэтому вторая попытка идёт заведомо без них.
 say "Загрузка кода"
-git fetch -q origin main
+
+diagnose() {
+    echo
+    printf "${Y}Не удалось скачать код. Что показывает сервер:${N}\n"
+    echo "  — переменные прокси:"
+    env | grep -iE '^(http|https|all)_proxy=' | sed 's/^/      /' || echo "      не заданы"
+    echo "  — настройки git про сеть и пароли:"
+    git config --get-regexp '^(http\.|url\.|credential\.)' 2>/dev/null | sed 's/^/      /' || true
+    git config --global --get-regexp '^(http\.|url\.|credential\.)' 2>/dev/null | sed 's/^/      /' || true
+    [ -f "$HOME/.git-credentials" ] \
+        && echo "      есть файл $HOME/.git-credentials ($(wc -l < "$HOME/.git-credentials") записей)"
+    echo "  — доступ к GitHub напрямую:"
+    echo "      код ответа $(curl -s -o /dev/null -w '%{http_code}' \
+        https://github.com/mnikem79-tech/NewSite3.git/info/refs?service=git-upload-pack 2>/dev/null || true) (ожидается 200)"
+    echo
+    echo "  — доступ к raw.githubusercontent.com:"
+    echo "      код ответа $(curl -s -o /dev/null -w '%{http_code}' \
+        https://raw.githubusercontent.com/mnikem79-tech/NewSite3/main/README.md 2>/dev/null || true) (ожидается 200)"
+    echo "  — SSH к GitHub:"
+    SSH_SAYS="$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=7 \
+        -T git@github.com 2>&1 \
+        | grep -iE "authenticat|denied|timed out|refused|unreachable" \
+        | head -1 || true)"
+    echo "      ${SSH_SAYS:-ответа нет}"
+    echo
+
+    if git config --get http.proxy >/dev/null 2>&1 \
+       || git config --global --get http.proxy >/dev/null 2>&1; then
+        echo "  Похоже, git ходит через прокси. Убрать его и повторить:"
+        echo "      git config --global --unset http.proxy"
+        echo "      git config --unset http.proxy"
+        echo "      bash /tmp/attach.sh"
+        echo
+    fi
+    echo "  Покажите этот вывод — по нему станет видно, что именно закрыто."
+    echo "  Архив каталога цел: $BACKUP"
+    die "загрузка кода не удалась"
+}
+
+# Адреса одного и того же репозитория. Порядок — от простого к обходному:
+# обычный HTTPS; он же заведомо без чужих паролей; SSH по имени из
+# ~/.ssh/config, если оно там осталось; обычный SSH; SSH через порт 443
+# на случай, когда 22-й закрыт.
+CANDIDATES=(
+    "$REPO"
+    "$REPO|anon"
+    "git@github-newsite3:mnikem79-tech/NewSite3.git"
+    "git@github.com:mnikem79-tech/NewSite3.git"
+    "ssh://git@ssh.github.com:443/mnikem79-tech/NewSite3.git"
+)
+[ -n "$PREV_URL" ] && CANDIDATES+=("$PREV_URL")
+
+FETCHED=""
+TRIED=""
+for entry in "${CANDIDATES[@]}"; do
+    # один и тот же адрес мог попасть в список дважды
+    case "$TRIED" in *"|$entry|"*) continue ;; esac
+    TRIED="$TRIED|$entry|"
+
+    url="${entry%|anon}"
+    anon=""
+    [ "$entry" != "$url" ] && anon="yes"
+
+    git remote set-url origin "$url"
+    if [ -n "$anon" ]; then
+        if git -c credential.helper= -c http.extraheader= \
+               fetch -q origin main 2>/dev/null; then
+            # чтобы чужие пароли не мешали и при обновлениях
+            git config credential.helper ""
+            FETCHED="$url (без сохранённых паролей)"
+        fi
+    elif git fetch -q origin main 2>/dev/null; then
+        FETCHED="$url"
+    fi
+
+    if [ -n "$FETCHED" ]; then
+        ok "код получен: $FETCHED"
+        break
+    fi
+    if [ -n "$anon" ]; then
+        warn "не отвечает: тот же адрес без сохранённых паролей"
+    else
+        warn "не отвечает: $url"
+    fi
+done
+
+[ -n "$FETCHED" ] || diagnose
+
 REMOTE="$(git rev-parse --short origin/main)"
-ok "получена версия $REMOTE"
+ok "версия $REMOTE"
 
 # --- 3. Что именно изменится ---------------------------------------------
 say "Что изменится в каталоге"
