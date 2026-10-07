@@ -1,0 +1,5 @@
+<section class="block block-cta">
+    {% if block.title %}<h2>{{ block.title }}</h2>{% endif %}
+    {% if block.content %}<p>{{ block.content|linebreaks }}</p>{% endif %}
+    <a class="btn" href="{{ block.link_href }}">{{ block.link_text }}</a>
+</section>

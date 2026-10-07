@@ -1,11 +1,125 @@
-{% load static i18n %}<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}NewSite3{% endblock %}</title>
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_settings.meta_description }}{% endblock %}">
+    {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% endif %}
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    {% comment %}
+        Тема оформления. Переопределяет только палитру и детали —
+        убрать строку ниже безопасно, вёрстка останется рабочей.
+    {% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    {# Счётчики и метрики из настроек сайта. Заполняет только администратор. #}
+    {{ site_settings.head_snippet|safe }}
 </head>
 <body>
-    {% block content %}{% endblock %}
+
+<header class="site-header">
+    <div class="container">
+        <div class="header-top">
+            <a href="{% url 'catalog:home' %}" class="logo">
+                {% if site_settings.logo %}
+                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}">
+                {% else %}
+                    <span class="logo-text">{{ site_settings.site_name }}</span>
+                {% endif %}
+                {% if site_settings.tagline %}<small class="tagline">{{ site_settings.tagline }}</small>{% endif %}
+            </a>
+
+            {% if site_settings.show_search %}
+            <form class="search-form" action="{% url 'catalog:search' %}" method="get" role="search">
+                <input type="search" name="q" value="{{ search_query }}"
+                       placeholder="Поиск по каталогу" aria-label="Поиск">
+                <button class="btn" type="submit">Найти</button>
+            </form>
+            {% endif %}
+
+            <div class="header-aside">
+                {% if site_settings.show_phone_in_header and site_settings.phone %}
+                    <a class="header-phone" href="tel:{{ site_settings.phone|cut:" "|cut:"-"|cut:"("|cut:")" }}">
+                        {{ site_settings.phone }}
+                    </a>
+                {% endif %}
+                <a class="cart-link" href="{% url 'cart:detail' %}">
+                    Корзина
+                    {% if cart_count %}<span class="cart-badge">{{ cart_count }}</span>{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            {% if header_menu %}
+                {% include "cms/partials/menu.html" with items=header_menu %}
+            {% else %}
+                {% for category in menu_categories %}
+                    <a href="{{ category.get_absolute_url }}">{{ category.name }}</a>
+                {% endfor %}
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block breadcrumbs %}{% endblock %}
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-cols">
+            <div class="footer-col">
+                <div class="footer-title">{{ site_settings.site_name }}</div>
+                {% if site_settings.footer_text %}
+                    <div class="footer-about">{{ site_settings.footer_text|linebreaks }}</div>
+                {% endif %}
+            </div>
+
+            {% if footer_menu %}
+            <div class="footer-col">
+                <div class="footer-title">Покупателю</div>
+                <nav class="footer-nav">
+                    {% include "cms/partials/menu.html" with items=footer_menu %}
+                </nav>
+            </div>
+            {% endif %}
+
+            <div class="footer-col">
+                <div class="footer-title">Контакты</div>
+                {% if site_settings.phone %}<div>{{ site_settings.phone }}</div>{% endif %}
+                {% if site_settings.email %}<div><a href="mailto:{{ site_settings.email }}">{{ site_settings.email }}</a></div>{% endif %}
+                {% if site_settings.address %}<div>{{ site_settings.address }}</div>{% endif %}
+                {% if site_settings.work_hours %}<div class="muted">{{ site_settings.work_hours }}</div>{% endif %}
+
+                {% if site_settings.socials %}
+                <div class="footer-socials">
+                    {% for social in site_settings.socials %}
+                        <a href="{{ social.url }}" target="_blank" rel="noopener">{{ social.title }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="footer-row">
+            <div>&copy; {% now "Y" %} {{ site_settings.site_name }}</div>
+            <div class="muted">Работает на Django</div>
+        </div>
+    </div>
+</footer>
+
+{{ site_settings.body_snippet|safe }}
 </body>
 </html>

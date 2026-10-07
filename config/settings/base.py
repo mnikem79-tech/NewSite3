@@ -38,6 +38,12 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.core",
     "apps.accounts",
+    "apps.catalog",
+    "apps.cms",
+    "apps.cart",
+    "apps.shipping",
+    "apps.payments",
+    "apps.orders",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -69,6 +75,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.site",
+                "apps.cart.context_processors.cart",
+                "apps.cms.context_processors.site_settings",
             ],
         },
     },
@@ -120,12 +129,53 @@ TIME_ZONE = "UTC"
 DISPLAY_TIME_ZONE = env("DISPLAY_TIME_ZONE", default="Europe/Moscow")
 
 # ---------------------------------------------------------------- статика и медиа
-STATIC_URL = "/static/"
+# ---------------------------------------------------------------------------
+# Работа в подкаталоге домена (например https://nail-app.ru/newsite3/).
+#
+# Задаётся одной переменной в .env: DJANGO_SCRIPT_NAME=/newsite3
+# Пусто — сайт живёт в корне домена, как обычно.
+#
+# Важно: префикс нужен не только адресам страниц, но и cookie. Если оставить
+# им путь "/", сессия и CSRF-токен магазина перезапишут cookie основного
+# сайта на том же домене — и разлогинят его пользователей.
+SCRIPT_NAME = env("DJANGO_SCRIPT_NAME", default="").rstrip("/")
+
+# Отдельные имена — всегда, а не только в подкаталоге. Соседний сайт на том
+# же домене второго уровня может поставить cookie с Domain=.nail-app.ru, и
+# тогда они долетят и до нас; совпадение имён разлогинивало бы то одного, то
+# другого.
+SESSION_COOKIE_NAME = "ns3_sessionid"
+CSRF_COOKIE_NAME = "ns3_csrftoken"
+LANGUAGE_COOKIE_NAME = "ns3_language"
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
+if SCRIPT_NAME:
+    if not SCRIPT_NAME.startswith("/"):
+        raise ValueError("DJANGO_SCRIPT_NAME должен начинаться со слэша, например /newsite3")
+    FORCE_SCRIPT_NAME = SCRIPT_NAME
+
+    # Путь cookie сужаем до подкаталога: иначе сессия и CSRF-токен магазина
+    # ушли бы и на соседние страницы того же домена.
+    SESSION_COOKIE_PATH = SCRIPT_NAME
+    CSRF_COOKIE_PATH = SCRIPT_NAME
+
+STATIC_URL = f"{SCRIPT_NAME}/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# whitenoise в dev ругается на отсутствующий каталог — создаём заранее.
+STATIC_ROOT.mkdir(exist_ok=True)
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-MEDIA_URL = "/media/"
+MEDIA_URL = f"{SCRIPT_NAME}/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Отдавать ли загруженные картинки силами Django.
+#
+# Нужно там, где веб-сервер физически не видит каталог media — например,
+# когда Caddy работает в контейнере, которому примонтирован только свой
+# конфиг. Медленнее file_server и занимает воркер, зато не требует менять
+# инфраструктуру. Когда появится общий том — выключается одной переменной.
+SERVE_MEDIA = env.bool("SERVE_MEDIA", default=False)
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},

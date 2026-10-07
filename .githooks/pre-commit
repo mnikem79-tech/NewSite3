@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# NewSite3: блокировка случайного коммита секретов
+# NewSite3: блокировка случайного коммита секретов.
+#
+# Проверка значений была слепа к кавычкам: SECRET_KEY = 'длинная-строка'
+# проходила насквозь, потому что апостроф не входил в набор символов.
+# Теперь кавычка допускается перед значением.
 set -u
 staged="$(git diff --cached --name-only)"
 
@@ -15,8 +19,15 @@ if printf '%s\n' "$staged" | grep -qE '\.(pem|key)$|(^|/)id_(rsa|ed25519)$'; the
     exit 1
 fi
 
+# Токены доступа узнаются по виду — их ловим отдельно и без исключений.
+if git diff --cached -U0 -- . \
+   | grep -qE '^\+.*(github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{30,}|gho_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16})'; then
+    echo "ОТКАЗ: в коммите строка, похожая на токен доступа." >&2
+    exit 1
+fi
+
 if git diff --cached -U0 -- . ':(exclude).env.example' \
-   | grep -qE '^\+.*(SECRET_KEY|PASSWORD|API_KEY|TOKEN|PRIVATE_KEY)[[:space:]]*[=:][[:space:]]*[A-Za-z0-9/+_-]{16,}'; then
+   | grep -qE '^\+.*(SECRET_KEY|PASSWORD|API_KEY|TOKEN|PRIVATE_KEY)[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9/+_-]{16,}'; then
     echo "ОТКАЗ: в диффе строка, похожая на секрет." >&2
     echo "Ложное срабатывание? git commit --no-verify" >&2
     exit 1

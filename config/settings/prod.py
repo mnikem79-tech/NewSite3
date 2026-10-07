@@ -30,7 +30,13 @@ SECURE_HSTS_PRELOAD = False
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 
-CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if not h[0].isdigit()]  # noqa: F405
+# По умолчанию доверяем тем же доменам, что в ALLOWED_HOSTS. Переопределить
+# нужно, если домен отвечает на нестандартном порту или используется www-алиас:
+# CSRF_TRUSTED_ORIGINS=https://nail-app.ru,https://www.nail-app.ru
+CSRF_TRUSTED_ORIGINS = env.list(  # noqa: F405
+    "CSRF_TRUSTED_ORIGINS",
+    default=[f"https://{h}" for h in ALLOWED_HOSTS if not h[0].isdigit()],  # noqa: F405
+)
 
 # ---------------------------------------------------------------- логи
 LOG_DIR = BASE_DIR / "logs"  # noqa: F405

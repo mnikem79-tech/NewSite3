@@ -1,74 +1,96 @@
 # NewSite3
 
-Интернет-магазин на Django с административной панелью, упакованный
-в дистрибутив с автоустановщиком для развёртывания на чистом VPS.
+Интернет-магазин на Django с административной панелью. Витрина отрисовывается
+на сервере, без сборщиков, CDN и внешних шрифтов: достаточно Python, Postgres
+и любого фронт-сервера.
 
 ## Стек
 
 | Слой | Технология |
 |---|---|
 | Backend | Django 5.2 LTS + Django REST Framework |
-| БД | PostgreSQL 14+ (`pg_trgm`, `unaccent`, `citext`) |
+| База данных | PostgreSQL 14+ (`pg_trgm`, `unaccent`, `citext`) |
 | Админка | Django Admin |
-| Прод | gunicorn + systemd + nginx + certbot |
+| Продакшн | gunicorn + systemd + Caddy (или nginx) |
 | Python | 3.10 – 3.13 |
+| Внешние зависимости во фронте | нет |
+
+## Возможности
+
+* **Каталог** — категории с вложенностью, товары, характеристики, поиск.
+* **Корзина и заказы** — состав заказа сохраняется снимком: смена цены или
+  удаление товара не искажает историю. Номер вида `2026-00042`, статусы
+  от «новый» до «доставлен», отмена и возврат.
+* **Конструктор страниц** — страницы из блоков (текст, галерея, товары,
+  призыв к действию), меню шапки и подвала, настройки сайта.
+* **Работа в подкаталоге** — магазин можно повесить и в корень домена, и на
+  путь вида `/shop`, переключается одной переменной окружения.
+* **Тема оформления** — палитра выносится в отдельный файл и переопределяет
+  базовые стили, не ломая вёрстку.
+
+## Быстрый старт
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements/dev.txt
+cp .env.example .env          # и впишите свои значения
+.venv/bin/python manage.py migrate
+.venv/bin/python manage.py createsuperuser
+.venv/bin/python manage.py runserver
+```
+
+Проверки:
+
+```bash
+.venv/bin/python -m pytest -q      # 178 тестов
+.venv/bin/ruff check .
+.venv/bin/black --check .
+```
 
 ## Структура
 
 ```
-config/          настройки проекта (base / dev / prod) и корневые маршруты
-apps/core/       абстрактные модели: TimeStampedModel, ActivatableModel
-apps/accounts/   пользователь с логином по e-mail
-requirements/    base.txt — прод, dev.txt — разработка
-scripts/         backup_db.sh, restore_db.sh
-deploy/          автоустановщик (следующий этап)
-docs/            документация и журнал решений
-tests/           тесты
+config/              настройки (base / dev / prod) и корневые маршруты
+apps/core/           общие примеси: TimeStamped, Activatable, Sortable, Seo
+apps/accounts/       пользователь с входом по e-mail
+apps/catalog/        категории, товары, витрина
+apps/cart/           корзина
+apps/orders/         оформление и история заказов
+apps/cms/            страницы, блоки, меню, настройки сайта
+templates/           шаблоны витрины и админки
+static/css/          стили: site.css — база, theme.css — палитра
+deploy/              systemd-юнит, правка Caddyfile, обновление из git
+tests/               тесты
+requirements/        base.txt — прод, dev.txt — разработка
 ```
 
-## Разработка
+## Развёртывание
+
+Боевой сервер — gunicorn на локальном порту под systemd, снаружи фронт-сервер.
+Файл `.env` с паролями лежит только на сервере и в репозиторий не попадает.
 
 ```bash
-cd /opt/newsite3
-source .venv/bin/activate
-
-python manage.py runserver 0.0.0.0:8000     # по умолчанию config.settings.dev
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-pytest
-ruff check . && black --check .
+sudo systemctl status newsite3          # состояние
+cd /opt/newsite3 && bash deploy/update.sh   # обновление из этого репозитория
 ```
 
-Админка: `http://nail-srv:8000/admin/`
-Healthcheck: `http://nail-srv:8000/healthz/`
+`deploy/update.sh` забирает изменения, доустанавливает зависимости при
+необходимости, применяет миграции, собирает статику, перезапускает службу и
+проверяет ответы. Если после обновления сайт не отвечает — возвращается на
+предыдущий коммит сам.
 
-## Конфигурация
+`deploy/caddy_patch.py` добавляет сайт в существующий Caddyfile, где уже живут
+чужие сайты: считает вложенность блоков, сохраняет чужие директивы и, если
+нужно, заворачивает их в `handle`, чтобы маршруты не перехватывали друг друга.
 
-Все параметры среды — в `/opt/newsite3/.env` (права `600`, в git не попадает).
-Шаблон с перечнем переменных — `.env.example`.
+## Настройки окружения
 
 | Переменная | Назначение |
 |---|---|
-| `DJANGO_SECRET_KEY` | ключ подписи, генерируется установщиком |
-| `DJANGO_DEBUG` | `True` только на деве |
-| `DJANGO_ALLOWED_HOSTS` | список доменов через запятую |
+| `DJANGO_SCRIPT_NAME` | пусто — сайт в корне адреса; `/shop` — в подкаталоге |
+| `SERVE_MEDIA` | `True`, если загруженные картинки отдаёт Django, а не фронт-сервер |
+| `DJANGO_ALLOWED_HOSTS` | домены через запятую |
+| `CSRF_TRUSTED_ORIGINS` | адреса со схемой, через запятую |
 | `DATABASE_URL` | строка подключения к PostgreSQL |
-| `EMAIL_BACKEND` | на деве — консольный |
-| `DEFAULT_CURRENCY` | валюта магазина, по умолчанию RUB |
 
-## Договорённости
-
-- Деньги — только `Decimal(12,2)`, никаких `float`.
-- Время в БД и приложении — UTC, локальное только при выводе.
-- Миграции коммитятся в репозиторий: установщик их применяет, а не генерирует.
-- Секреты и пароли — алфавитно-цифровые, ради переносимости между
-  bash, systemd, cron и psql.
-- `ATOMIC_REQUESTS = True`: каждый запрос в транзакции, заказ не сохранится
-  наполовину.
-
-Полный журнал решений — `docs/DECISIONS.md`.
-
-## Лицензия
-
-Не определена.
+Полный список — в `.env.example`.

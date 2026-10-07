@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина — {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1>Корзина</h1>
+
+{% if problems %}
+    <div class="notice warn">
+        <strong>Обратите внимание:</strong>
+        <ul style="margin:6px 0 0">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    </div>
+{% endif %}
+
+{% if items %}
+    <table class="cart-table">
+        <thead>
+            <tr><th colspan="2">Товар</th><th>Цена</th><th>Количество</th><th>Сумма</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="cart-thumb">
+                    {% with image=item.product.main_image %}
+                        {% if image %}<img src="{{ image.image.url }}" alt="{{ image.get_alt }}">
+                        {% else %}{% include "catalog/partials/no_image.html" %}{% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    <a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a>
+                    <div class="card-sku">арт. {{ item.product.sku }}</div>
+                </td>
+                <td class="nowrap">{{ item.product.price|floatformat:0 }} ₽</td>
+                <td>
+                    <form method="post" action="{% url 'cart:update' item.product.pk %}" class="qty-form">
+                        {% csrf_token %}
+                        <input type="number" name="quantity" value="{{ item.quantity }}"
+                               min="0" {% if item.max_quantity %}max="{{ item.max_quantity }}"{% endif %}
+                               aria-label="Количество">
+                        <button class="btn btn-ghost btn-sm" type="submit">OK</button>
+                    </form>
+                </td>
+                <td class="nowrap"><b>{{ item.line_total|floatformat:0 }} ₽</b></td>
+                <td>
+                    <form method="post" action="{% url 'cart:remove' item.product.pk %}">
+                        {% csrf_token %}
+                        <button class="btn-link" type="submit" title="Убрать">&times;</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="cart-summary">
+        <div class="cart-total">Итого: <b>{{ cart.subtotal|floatformat:0 }} ₽</b>
+            <span class="muted small">(доставка рассчитается при оформлении)</span>
+        </div>
+        <div class="cart-actions">
+            <a class="btn btn-ghost" href="{% url 'catalog:home' %}">Продолжить покупки</a>
+            <a class="btn" href="{% url 'orders:checkout' %}">Оформить заказ</a>
+        </div>
+    </div>
+{% else %}
+    <div class="empty">
+        <p>Корзина пуста.</p>
+        <p><a class="btn" href="{% url 'catalog:home' %}">Перейти в каталог</a></p>
+    </div>
+{% endif %}
+{% endblock %}

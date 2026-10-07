@@ -1,0 +1,33 @@
+<article class="card">
+    <a class="card-image" href="{{ product.get_absolute_url }}">
+        {% with image=product.main_image %}
+            {% if image %}
+                <img src="{{ image.image.url }}" alt="{{ image.get_alt }}" loading="lazy">
+            {% else %}
+                {% include "catalog/partials/no_image.html" %}
+            {% endif %}
+        {% endwith %}
+    </a>
+    <div class="card-body">
+        <div>
+            {% if product.is_on_sale %}<span class="badge badge-sale">−{{ product.discount_percent }}%</span>{% endif %}
+            {% if product.is_featured %}<span class="badge badge-hit">хит</span>{% endif %}
+            {% if not product.in_stock %}<span class="badge badge-out">нет в наличии</span>{% endif %}
+        </div>
+        <a class="card-title" href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+        <div class="card-sku">арт. {{ product.sku }}</div>
+        <div class="price-row">
+            <span class="price {% if product.is_on_sale %}sale{% endif %}">{{ product.price|floatformat:0 }} ₽</span>
+            {% if product.is_on_sale %}<span class="price-old">{{ product.old_price|floatformat:0 }} ₽</span>{% endif %}
+        </div>
+        {% if product.in_stock %}
+            <form method="post" action="{% url 'cart:add' product.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="btn btn-wide btn-sm" type="submit">В корзину</button>
+            </form>
+        {% else %}
+            <button class="btn btn-wide btn-sm" type="button" disabled>Нет в наличии</button>
+        {% endif %}
+    </div>
+</article>

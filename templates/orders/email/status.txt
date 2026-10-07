@@ -1,0 +1,8 @@
+Здравствуйте, {{ order.customer_name }}!
+
+Статус вашего заказа {{ order.number }} изменён: {{ order.get_status_display }}.
+
+Сумма заказа: {{ order.total }} руб.
+
+С уважением,
+служба поддержки

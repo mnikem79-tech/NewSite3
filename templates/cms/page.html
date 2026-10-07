@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.meta_title|default:page.title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ page.meta_description }}{% endblock %}
+
+{% block content %}
+<article class="cms-page cms-{{ page.layout }}">
+    {% if not page.is_active %}
+        <div class="notice warn">Черновик. Посетителям эта страница не видна.</div>
+    {% endif %}
+
+    {% if page.show_title %}<h1>{{ page.title }}</h1>{% endif %}
+    {% if page.intro %}<p class="page-intro">{{ page.intro|linebreaks }}</p>{% endif %}
+
+    {% for block in page.visible_blocks %}
+        {% include block.template_name %}
+    {% empty %}
+        {% if user.is_staff %}
+            <p class="muted">Страница пустая. Добавьте блоки в админке.</p>
+        {% endif %}
+    {% endfor %}
+</article>
+{% endblock %}

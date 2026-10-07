@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ {{ order.number }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1>Заказ {{ order.number }}</h1>
+<p class="muted">от {{ order.created_at|date:"d.m.Y H:i" }} · статус: <b>{{ order.get_status_display }}</b></p>
+
+{% include "orders/partials/order_body.html" %}
+{% endblock %}

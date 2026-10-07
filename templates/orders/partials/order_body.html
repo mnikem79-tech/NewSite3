@@ -1,0 +1,30 @@
+<table class="cart-table">
+    <thead><tr><th>Товар</th><th>Артикул</th><th>Цена</th><th>Кол-во</th><th>Сумма</th></tr></thead>
+    <tbody>
+    {% for item in order.items.all %}
+        <tr>
+            <td>{{ item.product_name }}</td>
+            <td class="card-sku">{{ item.product_sku }}</td>
+            <td class="nowrap">{{ item.price|floatformat:0 }} ₽</td>
+            <td>{{ item.quantity }}</td>
+            <td class="nowrap"><b>{{ item.total|floatformat:0 }} ₽</b></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="order-totals">
+    <div class="summary-row"><span>Товары</span><span>{{ order.subtotal|floatformat:0 }} ₽</span></div>
+    <div class="summary-row">
+        <span>Доставка{% if order.shipping_method_title %} — {{ order.shipping_method_title }}{% endif %}</span>
+        <span>{% if order.shipping_cost %}{{ order.shipping_cost|floatformat:0 }} ₽{% else %}бесплатно{% endif %}</span>
+    </div>
+    <div class="summary-row total"><span>Итого</span><b>{{ order.total|floatformat:0 }} ₽</b></div>
+</div>
+
+<div class="order-meta">
+    <div><span class="muted">Получатель:</span> {{ order.customer_name }}, {{ order.phone }}</div>
+    {% if order.shipping_address %}<div><span class="muted">Адрес:</span> {{ order.shipping_address }}</div>{% endif %}
+    <div><span class="muted">Оплата:</span> {{ order.payment_method_title|default:"не выбрана" }}</div>
+    {% if order.comment %}<div><span class="muted">Комментарий:</span> {{ order.comment }}</div>{% endif %}
+</div>

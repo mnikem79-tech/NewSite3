@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ site_name }} — интернет-магазин{% endblock %}
+
+{% block content %}
+    <h1>Каталог</h1>
+    <p class="muted">Выберите категорию или воспользуйтесь поиском.</p>
+
+    {% if categories %}
+        <div class="category-tiles">
+            {% for category in categories %}
+                <a class="tile" href="{{ category.get_absolute_url }}">
+                    {{ category.name }}
+                    {% if category.children.exists %}
+                        <small>{% for child in category.children.all|slice:":3" %}{{ child.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</small>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if products %}
+        <h2>Рекомендуем</h2>
+        <div class="product-grid">
+            {% for product in products %}{% include "catalog/partials/product_card.html" %}{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if latest %}
+        <h2>Новинки</h2>
+        <div class="product-grid">
+            {% for product in latest %}{% include "catalog/partials/product_card.html" %}{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if not categories and not latest %}
+        <div class="empty">
+            <p>Каталог пока пуст.</p>
+            <p class="small">Наполните его в админке или выполните <code>python manage.py seed_demo</code>.</p>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+# NewSite3 — магазин в подкаталоге nail-app.ru/newsite3
+#
+# Устанавливается в /etc/systemd/system/newsite3.service
+#
+# Слушает 127.0.0.1:8001 — порт локальный, снаружи недоступен.
+# TCP, а не unix-сокет: сокет потребовал бы согласовать права между
+# пользователем приложения и пользователем Caddy, а это лишний повод
+# для «ничего не работает, а почему — непонятно».
+
+[Unit]
+Description=NewSite3 (gunicorn)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__TARGET__
+Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
+EnvironmentFile=__TARGET__/.env
+
+ExecStart=__TARGET__/.venv/bin/gunicorn config.wsgi:application \
+    --bind 127.0.0.1:__PORT__ \
+    --workers 3 \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    --access-logfile __TARGET__/logs/gunicorn-access.log \
+    --error-logfile __TARGET__/logs/gunicorn-error.log
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+Restart=on-failure
+RestartSec=5
+
+# Защита: приложению не нужен доступ ко всей системе.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=__TARGET__
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.get_meta_title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ category.get_meta_description }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% include "catalog/partials/breadcrumbs.html" with current=category.name %}
+{% endblock %}
+
+{% block content %}
+    <h1>{{ category.name }}</h1>
+    {% if category.description %}<p class="muted">{{ category.description }}</p>{% endif %}
+
+    <div class="layout">
+        <aside class="sidebar">
+            <form method="get" action="">
+                {% if children %}
+                    <div class="filter-block">
+                        <h3>Подкатегории</h3>
+                        <ul class="subcategories">
+                            {% for child in children %}
+                                <li><a href="{{ child.get_absolute_url }}">{{ child.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="filter-block">
+                    <h3>Цена, ₽</h3>
+                    <div class="price-inputs">
+                        <input type="number" name="price_min" min="0" step="1"
+                               value="{{ request.GET.price_min }}"
+                               placeholder="{{ price_range.min|floatformat:0 }}">
+                        <input type="number" name="price_max" min="0" step="1"
+                               value="{{ request.GET.price_max }}"
+                               placeholder="{{ price_range.max|floatformat:0 }}">
+                    </div>
+                </div>
+
+                <div class="filter-block">
+                    <label>
+                        <input type="checkbox" name="in_stock" value="1"
+                               {% if request.GET.in_stock %}checked{% endif %}>
+                        Только в наличии
+                    </label>
+                </div>
+
+                {% for facet in facets %}
+                    <div class="filter-block">
+                        <h3>{{ facet.attribute.name }}</h3>
+                        <select name="attr-{{ facet.attribute.slug }}">
+                            <option value="">Любое</option>
+                            {% for value in facet.values %}
+                                <option value="{{ value }}" {% if facet.selected == value %}selected{% endif %}>
+                                    {{ value }}{% if facet.attribute.unit %} {{ facet.attribute.unit }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
+
+                <input type="hidden" name="sort" value="{{ current_sort }}">
+                <button class="btn btn-wide" type="submit">Применить</button>
+                {% if active_filters %}
+                    <p style="margin:10px 0 0"><a class="small" href="{{ request.path }}">Сбросить фильтры</a></p>
+                {% endif %}
+            </form>
+        </aside>
+
+        <div>
+            <div class="toolbar">
+                <div class="muted small">
+                    {% if is_paginated %}
+                        Товаров: {{ paginator.count }} · страница {{ page_obj.number }} из {{ paginator.num_pages }}
+                    {% else %}
+                        Товаров: {{ products|length }}
+                    {% endif %}
+                </div>
+                <form method="get" action="">
+                    {% for key, value in active_filters.items %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endfor %}
+                    <select name="sort" onchange="this.form.submit()" aria-label="Сортировка">
+                        {% for key, option in sort_options.items %}
+                            <option value="{{ key }}" {% if current_sort == key %}selected{% endif %}>{{ option.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <noscript><button class="btn btn-ghost" type="submit">Сортировать</button></noscript>
+                </form>
+            </div>
+
+            {% if products %}
+                <div class="product-grid">
+                    {% for product in products %}{% include "catalog/partials/product_card.html" %}{% endfor %}
+                </div>
+                {% include "catalog/partials/pagination.html" %}
+            {% else %}
+                <div class="empty">
+                    <p>По заданным условиям ничего не найдено.</p>
+                    <p><a href="{{ request.path }}">Сбросить фильтры</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

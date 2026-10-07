@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ {{ order.number }} принят — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="order-done">
+    <h1>Спасибо! Заказ {{ order.number }} принят</h1>
+    <p class="muted">Подтверждение отправлено на {{ order.email }}.</p>
+
+    {% if instructions %}
+        <div class="notice">{{ instructions }}</div>
+    {% endif %}
+
+    {% include "orders/partials/order_body.html" %}
+
+    <p style="margin-top:24px">
+        <a class="btn" href="{% url 'catalog:home' %}">Вернуться в каталог</a>
+    </p>
+</div>
+{% endblock %}

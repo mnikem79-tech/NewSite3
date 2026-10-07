@@ -1,0 +1,222 @@
+/*
+ * Тема оформления магазина.
+ *
+ * Палитра и пластика взяты у действующего сайта nail-app.ru, чтобы раздел
+ * не выглядел пришитым сбоку: те же пастельные тона, крупные скругления,
+ * мягкие тени, системные шрифты. Внешних зависимостей по-прежнему нет.
+ *
+ * Файл подключается ПОСЛЕ site.css и только переопределяет переменные и
+ * отдельные детали. Чтобы вернуть нейтральный вид — уберите одну строку
+ * из base.html; верстка от этого не развалится.
+ */
+
+:root {
+    --bg: #fdf7f5;
+    --bg-soft: #fbeef0;
+    --card: #ffffff;
+    --text: #2b2320;
+    --muted: #85716d;
+    --line: #f0dde2;
+    --accent: #d35d8f;
+    --accent-dark: #9b5bb8;
+    --danger: #d9456b;
+    --success: #2e9e6b;
+    --warning: #e0913d;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 14px 40px rgba(178, 92, 128, .14);
+    --shadow-sm: 0 4px 16px rgba(178, 92, 128, .10);
+    --grad: linear-gradient(120deg, var(--accent), var(--accent-dark));
+}
+
+body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    background:
+        radial-gradient(900px 480px at 85% -10%, #f6dce6 0%, transparent 55%),
+        radial-gradient(700px 420px at -10% 30%, #efe3f5 0%, transparent 50%),
+        var(--bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+h1, h2, h3 { letter-spacing: -.01em; }
+h1 { font-size: 30px; }
+
+/* ----------------------------------------------------------------- шапка */
+.site-header {
+    background: rgba(255, 255, 255, .82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+}
+
+.logo { font-weight: 800; letter-spacing: .3px; }
+.logo .logo-text { font-size: 22px; }
+.logo .logo-text::after {
+    content: "."; color: var(--accent);
+}
+.logo .tagline { color: var(--accent-dark); font-weight: 600; }
+
+.main-nav a {
+    color: var(--muted);
+    font-weight: 500;
+    padding: 9px 0;
+    border-bottom: 2px solid transparent;
+}
+.main-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); text-decoration: none; }
+
+.search-form input {
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding-left: 18px;
+}
+.search-form input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.header-phone { color: var(--text); font-weight: 700; }
+
+/* --------------------------------------------------------------- кнопки */
+.btn {
+    background: var(--grad);
+    border: none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); text-decoration: none; }
+.btn:active { transform: none; }
+.btn:disabled, .btn[disabled] {
+    background: var(--line); color: var(--muted); box-shadow: none; transform: none;
+}
+
+.btn-ghost {
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--line);
+    box-shadow: none;
+}
+.btn-ghost:hover { border-color: var(--accent); background: var(--bg-soft); }
+
+.btn-sm { padding: 8px 16px; font-size: 14px; }
+
+/* -------------------------------------------------------- карточки товара */
+.product-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform .14s ease, box-shadow .14s ease;
+}
+.product-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.product-card .card-body { padding: 16px 16px 18px; }
+.product-card .price { color: var(--text); font-weight: 800; }
+.product-card .old-price { color: var(--muted); }
+
+.badge, .card-badge {
+    background: var(--grad);
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+
+/* ----------------------------------------------------------- блоки, формы */
+.cart-table th { color: var(--accent-dark); }
+.cart-table td, .cart-table th { border-bottom-color: var(--line); }
+
+.form-control, .qty-form input, .add-to-cart input {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: #fff;
+}
+
+.radio-row {
+    border-radius: var(--radius-sm);
+    border-color: var(--line);
+    background: #fff;
+}
+.radio-row:hover { border-color: var(--accent); background: var(--bg-soft); }
+
+.order-summary, .filters, .sidebar {
+    background: rgba(255, 255, 255, .72);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.block-cta {
+    background: var(--grad);
+    color: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.block-cta h2 { color: #fff; }
+.block-cta p { color: rgba(255, 255, 255, .92); }
+.block-cta .btn {
+    background: #fff;
+    color: var(--accent);
+}
+
+.pill, .cart-badge { border-radius: 999px; }
+.cart-badge { background: var(--grad); }
+
+.message { border-radius: var(--radius-sm); }
+.notice { border-radius: var(--radius-sm); background: var(--bg-soft); border-color: var(--line); }
+
+/* -------------------------------------------------------------- подвал */
+.site-footer {
+    background: rgba(255, 255, 255, .72);
+    border-top: 1px solid var(--line);
+    margin-top: 54px;
+}
+.footer-title { color: var(--text); font-weight: 700; }
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--accent); }
+
+/* ------------------------------------------------------------ мелочи */
+.gallery-grid img, .block-image img { border-radius: var(--radius); }
+hr, .block-divider { border-top-color: var(--line); }
+::selection { background: #f7d9e6; }
+
+/* --------------------------------------------- товар без фотографии */
+/* Серая иконка «нет картинки» делала витрину недоделанной. Плашка в
+   палитре магазина с первой буквой названия смотрится как решение, а не
+   как пропуск, и помогает различать карточки между собой. */
+.card-image .no-photo,
+.product-gallery .no-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fbeef0 0%, #f3e6f7 100%);
+}
+
+.no-photo__letter {
+    font-size: clamp(28px, 7vw, 56px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: var(--grad, linear-gradient(120deg, #d35d8f, #9b5bb8));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    opacity: 0.55;
+    user-select: none;
+}
+
+/* Текст для программ чтения с экрана: картинки нет, и сказать об этом стоит. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}

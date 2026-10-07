@@ -1,4 +1,4 @@
-# --- секреты ---
+# Секреты. Пароли живут только на сервере, в репозиторий не попадают.
 .env
 .env.*
 !.env.example
@@ -6,28 +6,34 @@
 *.key
 secrets/
 
-# --- Python ---
-__pycache__/
-*.py[cod]
+# Виртуальное окружение — у каждой машины своё.
 .venv/
 venv/
+
+# Собирается командой collectstatic, в репозитории не нужно.
+staticfiles/
+
+# Загруженные через админку картинки — это данные, а не код.
+media/
+
+# Логи.
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
-# --- Django ---
-/media/
-/staticfiles/
-*.log
-db.sqlite3
+# Резервные копии, которые делают установщик и патчи.
+.backup-*/
 
-# --- бэкапы и дампы ---
-*.sql
-*.dump
-*.bak
-backups/
-
-# --- IDE / ОС ---
+# Редакторы и система.
 .idea/
 .vscode/
+*.swp
 .DS_Store

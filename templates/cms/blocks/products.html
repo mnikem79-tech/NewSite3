@@ -1,0 +1,13 @@
+<section class="block block-products">
+    {% if block.title %}<h2>{{ block.title }}</h2>{% endif %}
+    <div class="product-grid">
+        {% for product in block.get_products %}
+            {% include "catalog/partials/product_card.html" %}
+        {% empty %}
+            <p class="muted">Товары не найдены.</p>
+        {% endfor %}
+    </div>
+    {% if block.link_url %}
+        <p><a class="btn btn-ghost" href="{{ block.link_href }}">{{ block.link_text|default:"Смотреть все" }}</a></p>
+    {% endif %}
+</section>

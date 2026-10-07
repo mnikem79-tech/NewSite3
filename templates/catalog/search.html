@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск: {{ query }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+    <h1>Результаты поиска</h1>
+
+    {% if query %}
+        <p class="muted">Запрос: «{{ query }}»{% if is_paginated %} · найдено: {{ paginator.count }}{% endif %}</p>
+
+        {% if fuzzy %}
+            <div class="notice warn">
+                Точных совпадений нет. Показываем товары с похожими названиями —
+                возможно, в запросе опечатка.
+            </div>
+        {% endif %}
+
+        {% if products %}
+            <div class="product-grid">
+                {% for product in products %}{% include "catalog/partials/product_card.html" %}{% endfor %}
+            </div>
+            {% include "catalog/partials/pagination.html" %}
+        {% else %}
+            <div class="empty">
+                <p>По запросу «{{ query }}» ничего не найдено.</p>
+                <p class="small">Попробуйте изменить формулировку или
+                    <a href="{% url 'catalog:home' %}">вернуться в каталог</a>.</p>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty"><p>Введите поисковый запрос.</p></div>
+    {% endif %}
+{% endblock %}

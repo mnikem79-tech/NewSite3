@@ -1,0 +1,18 @@
+Здравствуйте, {{ order.customer_name }}!
+
+Ваш заказ {{ order.number }} принят.
+
+Состав заказа:
+{% for item in items %}  - {{ item.product_name }} (арт. {{ item.product_sku }}) x {{ item.quantity }} = {{ item.total }} руб.
+{% endfor %}
+Товары: {{ order.subtotal }} руб.
+Доставка: {{ order.shipping_method_title|default:"не выбрана" }} — {{ order.shipping_cost }} руб.
+Итого: {{ order.total }} руб.
+
+Оплата: {{ order.payment_method_title|default:"не выбрана" }}
+{% if order.shipping_address %}Адрес доставки: {{ order.shipping_address }}{% endif %}
+
+Статус заказа: {{ order.get_status_display }}
+
+Спасибо за покупку!
+{{ site_name }}

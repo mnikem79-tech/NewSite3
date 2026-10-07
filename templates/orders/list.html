@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Мои заказы — {{ site_name }}{% endblock %}
+
+{% block content %}
+<h1>Мои заказы</h1>
+
+{% if orders %}
+    <table class="cart-table">
+        <thead><tr><th>Номер</th><th>Дата</th><th>Позиций</th><th>Сумма</th><th>Статус</th></tr></thead>
+        <tbody>
+        {% for order in orders %}
+            <tr>
+                <td><a href="{{ order.get_absolute_url }}">{{ order.number }}</a></td>
+                <td>{{ order.created_at|date:"d.m.Y" }}</td>
+                <td>{{ order.items_count }}</td>
+                <td class="nowrap">{{ order.total|floatformat:0 }} ₽</td>
+                <td>{{ order.get_status_display }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% include "catalog/partials/pagination.html" %}
+{% else %}
+    <div class="empty"><p>Заказов пока нет.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.get_meta_title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{% firstof product.get_meta_description product.short_description %}{% endblock %}
+
+{% block breadcrumbs %}
+    {% include "catalog/partials/breadcrumbs.html" with current=product.name %}
+{% endblock %}
+
+{% block content %}
+<div class="product-detail">
+    <div>
+        <div class="gallery-main">
+            {% with image=product.main_image %}
+                {% if image %}
+                    <img src="{{ image.image.url }}" alt="{{ image.get_alt }}">
+                {% else %}
+                    {% include "catalog/partials/no_image.html" %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% if images|length > 1 %}
+            <div class="gallery-thumbs">
+                {% for image in images %}
+                    <img src="{{ image.image.url }}" alt="{{ image.get_alt }}" loading="lazy">
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <h1>{{ product.name }}</h1>
+        <p class="card-sku">Артикул: {{ product.sku }} · Категория:
+            <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
+        </p>
+
+        {% if product.short_description %}<p>{{ product.short_description }}</p>{% endif %}
+
+        <div class="price-block">
+            <span class="price {% if product.is_on_sale %}sale{% endif %}">{{ product.price|floatformat:0 }} ₽</span>
+            {% if product.is_on_sale %}
+                <span class="price-old">{{ product.old_price|floatformat:0 }} ₽</span>
+                <span class="badge badge-sale">−{{ product.discount_percent }}%</span>
+            {% endif %}
+        </div>
+
+        <p>
+            {% if not product.track_stock %}
+                <span class="stock-in">Под заказ</span>
+            {% elif product.stock == 0 %}
+                <span class="stock-out">Нет в наличии</span>
+            {% elif product.stock < 5 %}
+                <span class="stock-low">Осталось мало: {{ product.stock }} шт.</span>
+            {% else %}
+                <span class="stock-in">В наличии: {{ product.stock }} шт.</span>
+            {% endif %}
+        </p>
+
+        {% if product.in_stock %}
+            <form method="post" action="{% url 'cart:add' product.pk %}" class="add-to-cart">
+                {% csrf_token %}
+                <input type="number" name="quantity" value="1" min="1"
+                       {% if product.track_stock %}max="{{ product.stock }}"{% endif %}
+                       aria-label="Количество">
+                <button class="btn" type="submit">В корзину</button>
+            </form>
+        {% else %}
+            <p><button class="btn" type="button" disabled>Нет в наличии</button></p>
+        {% endif %}
+
+        {% if product.attributes.all %}
+            <h2 style="margin-top:28px">Характеристики</h2>
+            <table class="spec-table">
+                {% for item in product.attributes.all %}
+                    <tr>
+                        <td>{{ item.attribute.name }}</td>
+                        <td>{{ item.display_value }}</td>
+                    </tr>
+                {% endfor %}
+                {% if product.weight %}
+                    <tr><td>Вес</td><td>{{ product.weight|floatformat:3 }} кг</td></tr>
+                {% endif %}
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+{% if product.description %}
+    <h2>Описание</h2>
+    <div style="max-width:760px">{{ product.description|linebreaks }}</div>
+{% endif %}
+
+{% if related %}
+    <h2>Похожие товары</h2>
+    <div class="product-grid">
+        {% for product in related %}{% include "catalog/partials/product_card.html" %}{% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
