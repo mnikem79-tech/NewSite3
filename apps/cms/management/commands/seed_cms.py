@@ -119,18 +119,19 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         force = options["force"]
 
+        # Выдуманные телефон и адрес на живом сайте выглядят как настоящие,
+        # и посетитель может по ним позвонить. Поэтому контакты остаются
+        # пустыми: шаблон их просто не выводит, пока владелец не заполнит
+        # раздел «Конструктор сайта → Настройки сайта».
         settings_obj = SiteSettings.load()
-        if not settings_obj.phone:
-            settings_obj.tagline = settings_obj.tagline or "интернет-магазин"
-            settings_obj.phone = "+7 900 000-00-00"
-            settings_obj.email = "shop@example.com"
-            settings_obj.address = "г. Москва, ул. Примерная, 1"
-            settings_obj.work_hours = "Пн–Пт 9:00–18:00"
+        if not settings_obj.tagline:
+            settings_obj.tagline = "интернет-магазин"
+            settings_obj.show_phone_in_header = False
             settings_obj.footer_text = (
                 "Интернет-магазин на NewSite3. " "Замените этот текст в настройках сайта."
             )
             settings_obj.save()
-            self.stdout.write("  + настройки сайта заполнены образцом")
+            self.stdout.write("  + настройки сайта заполнены (контакты не выдуманы)")
 
         created_pages = 0
         for data in PAGES:

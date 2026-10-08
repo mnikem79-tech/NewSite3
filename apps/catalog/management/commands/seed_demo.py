@@ -10,12 +10,24 @@
 """
 
 from decimal import Decimal
+from pathlib import Path
 
+from django.core.files import File
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.text import slugify
 
-from apps.catalog.models import Attribute, Category, Product, ProductAttribute
+from apps.catalog.models import (
+    Attribute,
+    Category,
+    Product,
+    ProductAttribute,
+    ProductImage,
+)
+
+# Снимки лежат в репозитории: папка media в него не входит, а витрина без
+# фотографий выглядит незаконченной. Файл подбирается по артикулу товара.
+DEMO_IMAGES = Path(__file__).resolve().parents[4] / "demo" / "products"
 
 CATEGORIES = [
     ("Электроника", None, [("Смартфоны", None), ("Наушники", None)]),
@@ -121,6 +133,24 @@ class Command(BaseCommand):
             action="store_true",
             help="Удалить демо-товары и категории перед наполнением",
         )
+        parser.add_argument(
+            "--no-images",
+            action="store_true",
+            help="Не подключать фотографии из demo/products",
+        )
+
+    def attach_image(self, product) -> bool:
+        """Ставит товару фотографию. Повторный запуск ничего не дублирует."""
+        if product.images.exists():
+            return False
+        source = DEMO_IMAGES / f"{product.sku.lower()}.jpg"
+        if not source.exists():
+            return False
+        image = ProductImage(product=product, alt=product.name, is_main=True)
+        with source.open("rb") as fh:
+            image.image.save(source.name, File(fh), save=False)
+        image.save()
+        return True
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -166,6 +196,7 @@ class Command(BaseCommand):
 
         # --- товары ---
         created_count = 0
+        images_count = 0
         for cat_name, name, sku, price, old_price, stock, spec in PRODUCTS:
             product, created = Product.objects.get_or_create(
                 sku=sku,
@@ -193,9 +224,14 @@ class Command(BaseCommand):
                         product=product, attribute=attrs[attr_name], value=value
                     )
 
+            if not options["no_images"] and self.attach_image(product):
+                images_count += 1
+                self.stdout.write(f"    + фотография: {product.sku}")
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Готово. Категорий: {Category.objects.count()}, "
-                f"товаров: {Product.objects.count()} (новых: {created_count})"
+                f"товаров: {Product.objects.count()} (новых: {created_count}, "
+                f"фотографий добавлено: {images_count})"
             )
         )
