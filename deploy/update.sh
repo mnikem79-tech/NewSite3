@@ -29,8 +29,17 @@ die()  { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 cd "$TARGET"
 [ -d .git ] || die "$TARGET не является git-репозиторием. Сначала выполните привязку."
 
-# shellcheck source=deploy/_remote.sh
-. "$TARGET/deploy/_remote.sh"
+# Общая часть ищется сначала рядом со скриптом: так его можно запустить
+# из /tmp, когда в каталоге сайта лежит ещё старая версия.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+for candidate in "$SELF_DIR/_remote.sh" "$TARGET/deploy/_remote.sh"; do
+    if [ -f "$candidate" ]; then
+        # shellcheck source=deploy/_remote.sh
+        . "$candidate"
+        break
+    fi
+done
+command -v ns3_fetch >/dev/null || die "Рядом нет файла _remote.sh"
 
 # Запуск от root ломает две вещи сразу: не читаются ssh-настройки
 # владельца и git отказывается работать в чужом каталоге
@@ -45,7 +54,8 @@ fi
 
 # Запоминаем, куда возвращаться, если обновление окажется неудачным.
 PREVIOUS="$(git rev-parse HEAD)"
-REQ_BEFORE="$(sha256sum requirements/*.txt 2>/dev/null | sha256sum)"
+# При pipefail пустой список файлов обрывал бы весь скрипт.
+REQ_BEFORE="$(sha256sum requirements/*.txt 2>/dev/null | sha256sum || true)"
 
 say "Проверка локальных изменений"
 if ! git diff --quiet || ! git diff --cached --quiet; then
