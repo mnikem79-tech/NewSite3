@@ -220,3 +220,95 @@ hr, .block-divider { border-top-color: var(--line); }
     white-space: nowrap;
     border: 0;
 }
+
+/* ======================================================================
+   Содержимое, набранное в визуальном редакторе.
+   Правила повторяют то, что видно в админке: редактор не должен
+   обманывать — страница обязана выглядеть так же, как при наборе.
+   ====================================================================== */
+
+.cms-rich > *:first-child { margin-top: 0; }
+.cms-rich > *:last-child { margin-bottom: 0; }
+
+.cms-rich p { margin: 0 0 1em; }
+
+.cms-rich h2,
+.cms-rich h3,
+.cms-rich h4 {
+    color: var(--ink);
+    line-height: 1.25;
+    margin: 1.6em 0 .6em;
+}
+
+.cms-rich a { color: var(--accent); }
+.cms-rich a:hover { color: var(--accent-2); }
+
+.cms-rich ul,
+.cms-rich ol { margin: 0 0 1em; padding-left: 1.4em; }
+
+.cms-rich li { margin: .3em 0; }
+
+.cms-rich blockquote {
+    margin: 1.2em 0;
+    padding: .2em 0 .2em 1.1em;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+}
+
+/* Размер картинки задаётся прямо в редакторе — ширину из разметки
+   уважаем, но не даём вылезти за пределы колонки на телефоне. */
+.cms-rich img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+.cms-rich figure { margin: 1.4em 0; }
+
+.cms-rich figcaption {
+    color: var(--muted);
+    font-size: .92em;
+    margin-top: .5em;
+}
+
+.cms-rich table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2em 0;
+}
+
+.cms-rich th,
+.cms-rich td {
+    border: 1px solid var(--line);
+    padding: .6em .8em;
+    text-align: left;
+}
+
+.cms-rich th { background: var(--bg-2); }
+
+.cms-rich hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 2em 0;
+}
+
+/* Колонки из кнопки «Колонки». На узком экране встают друг под друга —
+   иначе на телефоне текст сжимается до нечитаемых столбиков. */
+.cms-cols {
+    display: grid;
+    gap: 22px;
+    margin: 1.4em 0;
+}
+
+.cms-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.cms-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.cms-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.cms-col > *:first-child { margin-top: 0; }
+.cms-col > *:last-child { margin-bottom: 0; }
+
+@media (max-width: 760px) {
+    .cms-cols-2,
+    .cms-cols-3,
+    .cms-cols-4 { grid-template-columns: 1fr; }
+}

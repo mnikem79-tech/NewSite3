@@ -17,6 +17,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from .models import BlockImage, ContentBlock, MediaFile, MenuItem, Page, SiteSettings
+from .widgets import RichTextWidget
 
 RAW_HTML_WARNING = _(
     "Произвольный HTML может вставить на сайт что угодно, включая чужие скрипты. "
@@ -182,7 +183,8 @@ class ContentBlockForm(forms.ModelForm):
             "limit",
         )
         widgets = {
-            "content": forms.Textarea(attrs={"rows": 6, "style": "width:100%;max-width:60em"}),
+            # Визуальный редактор: текст сверху, его HTML снизу.
+            "content": RichTextWidget(),
         }
 
     def clean(self):

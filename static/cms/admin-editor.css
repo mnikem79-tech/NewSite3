@@ -1,0 +1,79 @@
+/*
+ * Редактор в админке. Задача стилей — чтобы написанное выглядело так же,
+ * как потом на сайте: та же палитра, те же колонки, те же картинки.
+ */
+
+/* Поле до запуска редактора: без этого при загрузке страницы видно
+   «голую» textarea, которая через миг подменяется — заметный скачок. */
+textarea.ns3-rich {
+    opacity: 0;
+}
+
+.jodit-container textarea.ns3-rich,
+.jodit-container + textarea.ns3-rich {
+    opacity: 1;
+}
+
+.jodit-container {
+    --ns3-accent: #d35d8f;
+    --ns3-line: #f0dde2;
+    border-radius: 10px;
+    border-color: var(--ns3-line);
+    max-width: 100%;
+}
+
+/* Панель инструментов не должна уезжать за край узкого инлайна. */
+.jodit-toolbar__box {
+    border-radius: 10px 10px 0 0;
+}
+
+.jodit-ui-group {
+    flex-wrap: wrap;
+}
+
+/* Нижняя половина — HTML-код. Моноширинный шрифт и читаемый размер. */
+.jodit-source__mirror,
+.jodit-source {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.jodit-workplace .jodit-wysiwyg {
+    font: 16px/1.65 "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #2b2320;
+}
+
+.jodit-wysiwyg a {
+    color: var(--ns3-accent);
+}
+
+/* Колонки — такие же, как на витрине, иначе редактор обманывает. */
+.jodit-wysiwyg .cms-cols {
+    display: grid;
+    gap: 20px;
+    margin: 18px 0;
+}
+
+.jodit-wysiwyg .cms-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.jodit-wysiwyg .cms-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.jodit-wysiwyg .cms-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Пунктир показывает границы колонок только в редакторе: на сайте их нет. */
+.jodit-wysiwyg .cms-col {
+    border: 1px dashed var(--ns3-line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-height: 40px;
+}
+
+.jodit-wysiwyg img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+/* В инлайне блоков подпись поля занимает место — убираем лишний отступ. */
+.inline-related .form-row .jodit-container {
+    margin-top: 6px;
+}
