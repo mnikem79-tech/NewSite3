@@ -28,6 +28,19 @@ die()  { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 cd "$TARGET"
 [ -d .git ] || die "$TARGET не является git-репозиторием. Сначала выполните привязку."
+
+# shellcheck source=deploy/_remote.sh
+. "$TARGET/deploy/_remote.sh"
+
+# Запуск от root ломает две вещи сразу: не читаются ssh-настройки
+# владельца и git отказывается работать в чужом каталоге
+# («dubious ownership»). Поэтому сразу отправляем к владельцу.
+OWNER="$(stat -c %U "$TARGET" 2>/dev/null || echo "")"
+if [ "$(id -u)" = "0" ] && [ -n "$OWNER" ] && [ "$OWNER" != "root" ]; then
+    die "Запущено от root, а каталог принадлежит $OWNER.
+Выполните от владельца — sudo здесь не нужен:
+    sudo -u $OWNER bash $TARGET/deploy/update.sh"
+fi
 [ -x .venv/bin/python ] || die "Нет виртуального окружения $TARGET/.venv"
 
 # Запоминаем, куда возвращаться, если обновление окажется неудачным.
@@ -43,7 +56,8 @@ fi
 ok "Рабочая копия чистая"
 
 say "Загрузка изменений"
-git fetch --prune origin
+ns3_fetch "$BRANCH" || { ns3_diagnose "$BRANCH"; die "код получить не удалось"; }
+[ "${NS3_REMOTE_URL:-}" = "$(git remote get-url origin)" ] && ok "источник: $NS3_REMOTE_URL"
 LOCAL="$(git rev-parse HEAD)"
 REMOTE="$(git rev-parse "origin/$BRANCH")"
 
